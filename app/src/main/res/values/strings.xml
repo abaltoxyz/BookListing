@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Book Listing</string>
+    <string name="no_books">No books found.</string>
+    <string name="hint_search">Search Book Listing</string>
+    <string name="no_internet">No internet connection.</string>
+    <string name="no_description">No description available for this book.</string>
+</resources>
