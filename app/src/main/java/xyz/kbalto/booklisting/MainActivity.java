@@ -19,19 +19,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Book>> {
     private String mRequestUrl = "https://www.googleapis.com/books/v1/volumes?q=";
     private BookAdapter mAdapter;
     private TextView mEmptyStateTextView;
     private String mQuery = "";
+    private ListView bookListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ListView bookListView = (ListView) findViewById(R.id.list);
+        bookListView = (ListView) findViewById(R.id.list);
 
         mEmptyStateTextView = (TextView) findViewById(R.id.no_items_view);
         bookListView.setEmptyView(mEmptyStateTextView);
@@ -69,13 +71,26 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         searchIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Get the text from the EditText and update the mQuery value.
                 mQuery = editText.getText().toString().replaceAll(" ", "+");
+                // If it's empty don't proceed.
                 if (mQuery.isEmpty()) {
                     Toast.makeText(MainActivity.this, "Nothing to search", Toast.LENGTH_SHORT).show();
                 }
+                // Update the mRequestUrl value with the new mQuery.
                 mRequestUrl = mRequestUrl + mQuery + "&maxResults=15";
-                Log.i("onQueryTextSubmit", "mQuery value is: " + mQuery);
+                Log.i("onQueryTextSubmit", "mRequestUrl value is: " + mRequestUrl);
+                // Restart the loader.
                 getLoaderManager().restartLoader(1, null, MainActivity.this);
+                Log.i("onClick", "loader restarted");
+                // Try to make the progress bar appear again (not working)
+                View progressBar = findViewById(R.id.progress_bar);
+                progressBar.setVisibility(View.VISIBLE);
+                // Update mRequestUrl back to its original value. TODO: change it to global variable somehow.
+                mRequestUrl = "https://www.googleapis.com/books/v1/volumes?q=";
+                // This is what makes the ListView update with new info.
+                mAdapter = new BookAdapter(MainActivity.this, new ArrayList<Book>());
+                bookListView.setAdapter(mAdapter);
             }
         });
     }
@@ -83,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     public Loader<List<Book>> onCreateLoader(int i, Bundle bundle) {
         // Create a new Loader for this URL.
+        Log.i("onCreateLoader", "loader created");
         return new BookLoader(this, mRequestUrl);
     }
 
@@ -90,8 +106,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
      * Clears or adds list to the adapter.
      * If no content is found, sets empty state view after the background thread is finished.
      *
-     * @param loader
-     * @param books
      */
     @Override
     public void onLoadFinished(Loader<List<Book>> loader, List<Book> books) {
@@ -101,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             mAdapter.addAll(books);
         }
         mEmptyStateTextView.setText(R.string.no_books);
-        mEmptyStateTextView.setVisibility(View.VISIBLE);
+        mEmptyStateTextView.setVisibility(VISIBLE);
 
         ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         progressBar.setVisibility(GONE);
@@ -110,7 +124,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     /**
      * Resets the loader so we can clear out existing data.
      *
-     * @param loader
      */
     @Override
     public void onLoaderReset(Loader<List<Book>> loader) {
